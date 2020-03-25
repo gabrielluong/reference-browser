@@ -47,6 +47,12 @@ class TabsPanel @JvmOverloads constructor(
                     }
                     closeTabsTray?.invoke()
                 }
+                R.id.newWorkContainer -> {
+                    tabsUseCases.addTab.invoke("about:blank", selectTab = true, contextId = "Work")
+                }
+                R.id.newShoppingContainer -> {
+                    tabsUseCases.addTab.invoke("about:blank", selectTab = true, contextId = "Shopping")
+                }
                 R.id.closeTab -> {
                     tabsUseCases.removeAllTabsOfType.invoke(private = isPrivateTray)
                 }

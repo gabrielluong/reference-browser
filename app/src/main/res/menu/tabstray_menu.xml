@@ -8,7 +8,17 @@
         android:id="@+id/newTab"
         android:icon="@drawable/mozac_ic_tab_new"
         android:title="@string/menu_action_add_tab"
-        app:showAsAction="ifRoom" />
+        app:showAsAction="always" />
+    <item
+        android:id="@+id/newWorkContainer"
+        android:icon="@drawable/ic_briefcase"
+        android:title="@string/menu_action_add_work_container"
+        app:showAsAction="always" />
+    <item
+        android:id="@+id/newShoppingContainer"
+        android:icon="@drawable/ic_cart"
+        android:title="@string/menu_action_add_shopping_container"
+        app:showAsAction="always" />
     <item
         android:id="@+id/closeTab"
         android:title="@string/menu_action_close_tabs"
