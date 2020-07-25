@@ -10,6 +10,9 @@ import android.preference.PreferenceManager
 import mozilla.components.browser.icons.BrowserIcons
 import mozilla.components.browser.session.SessionManager
 import mozilla.components.browser.session.storage.SessionStorage
+import mozilla.components.browser.state.action.ContainerAction
+import mozilla.components.browser.state.state.BrowserState
+import mozilla.components.browser.state.state.ContainerState
 import mozilla.components.browser.state.store.BrowserStore
 import mozilla.components.browser.storage.sync.PlacesHistoryStorage
 import mozilla.components.browser.storage.sync.RemoteTabsStorage
@@ -23,6 +26,7 @@ import mozilla.components.feature.addons.AddonManager
 import mozilla.components.feature.addons.amo.AddonCollectionProvider
 import mozilla.components.feature.addons.update.AddonUpdater
 import mozilla.components.feature.addons.update.DefaultAddonUpdater
+import mozilla.components.feature.containers.ContainerMiddleware
 import mozilla.components.feature.customtabs.store.CustomTabsServiceStore
 import mozilla.components.feature.downloads.DownloadMiddleware
 import mozilla.components.feature.media.RecordingDevicesNotificationFeature
@@ -60,8 +64,15 @@ class Core(private val context: Context) {
 
         val defaultSettings = DefaultSettings(
             requestInterceptor = AppRequestInterceptor(context),
-            remoteDebuggingEnabled = prefs.getBoolean(context.getPreferenceKey(pref_key_remote_debugging), false),
-            testingModeEnabled = prefs.getBoolean(context.getPreferenceKey(R.string.pref_key_testing_mode), false),
+            remoteDebuggingEnabled = prefs.getBoolean(
+                context.getPreferenceKey(
+                    pref_key_remote_debugging
+                ), false
+            ),
+            testingModeEnabled = prefs.getBoolean(
+                context.getPreferenceKey(R.string.pref_key_testing_mode),
+                false
+            ),
             trackingProtectionPolicy = createTrackingProtectionPolicy(prefs),
             historyTrackingDelegate = HistoryDelegate(lazyHistoryStorage)
         )
@@ -80,13 +91,26 @@ class Core(private val context: Context) {
      */
     val store by lazy {
         BrowserStore(
+            initialState = BrowserState(
+                containers = mapOf(
+                    "Work" to ContainerState(
+                        contextId = "Work",
+                        name = "Work",
+                        color = ContainerState.Color.GREEN,
+                        icon = ContainerState.Icon.BRIEFCASE
+                    )
+                )
+            ),
             middleware = listOf(
                 MediaMiddleware(context, MediaService::class.java),
                 DownloadMiddleware(context, DownloadService::class.java),
                 ThumbnailsMiddleware(thumbnailStorage),
-                ReaderViewMiddleware()
+                ReaderViewMiddleware(),
+                ContainerMiddleware(context)
             )
-        )
+        ).apply {
+            this.dispatch(ContainerAction.InitializeContainerState)
+        }
     }
 
     /**
@@ -118,8 +142,10 @@ class Core(private val context: Context) {
             RecordingDevicesNotificationFeature(context, sessionManager = this)
                 .enable()
 
-            WebNotificationFeature(context, engine, icons, R.drawable.ic_notification,
-                sitePermissionsStorage, BrowserActivity::class.java)
+            WebNotificationFeature(
+                context, engine, icons, R.drawable.ic_notification,
+                sitePermissionsStorage, BrowserActivity::class.java
+            )
         }
     }
 
@@ -190,8 +216,16 @@ class Core(private val context: Context) {
      */
     fun createTrackingProtectionPolicy(
         prefs: SharedPreferences = PreferenceManager.getDefaultSharedPreferences(context),
-        normalMode: Boolean = prefs.getBoolean(context.getPreferenceKey(pref_key_tracking_protection_normal), true),
-        privateMode: Boolean = prefs.getBoolean(context.getPreferenceKey(pref_key_tracking_protection_private), true)
+        normalMode: Boolean = prefs.getBoolean(
+            context.getPreferenceKey(
+                pref_key_tracking_protection_normal
+            ), true
+        ),
+        privateMode: Boolean = prefs.getBoolean(
+            context.getPreferenceKey(
+                pref_key_tracking_protection_private
+            ), true
+        )
     ): TrackingProtectionPolicy {
 
         val trackingPolicy = TrackingProtectionPolicy.recommended()

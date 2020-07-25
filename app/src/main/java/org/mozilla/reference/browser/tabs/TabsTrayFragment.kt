@@ -78,8 +78,8 @@ class TabsTrayFragment : Fragment(), UserInteractionHandler {
         }
     }
 
-    private fun updateTabsToolbar(isPrivate: Boolean) {
-        tabsToolbar.updateToolbar(isPrivate)
+    private fun updateTabsToolbar(isPrivate: Boolean, contextId: String) {
+        tabsToolbar.updateToolbar(isPrivate, contextId)
     }
 
     private fun createAndSetupTabsTray(context: Context): TabsTray {

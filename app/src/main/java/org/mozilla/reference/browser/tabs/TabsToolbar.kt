@@ -16,6 +16,7 @@ class TabsToolbar @JvmOverloads constructor(
 ) : androidx.appcompat.widget.Toolbar(context, attrs) {
     private var tabsFeature: TabsFeature? = null
     private var isPrivateTray = false
+    private var container: String? = null
     private var closeTabsTray: (() -> Unit)? = null
 
     init {
@@ -30,9 +31,17 @@ class TabsToolbar @JvmOverloads constructor(
             when (it.itemId) {
                 R.id.newTab -> {
                     when (isPrivateTray) {
-                        true -> tabsUseCases.addPrivateTab.invoke("about:privatebrowsing", selectTab = true)
-                        false -> tabsUseCases.addTab.invoke("about:blank", selectTab = true)
+                        true -> tabsUseCases.addPrivateTab.invoke(
+                            "about:privatebrowsing",
+                            selectTab = true
+                        )
+                        false -> tabsUseCases.addTab.invoke(
+                            "about:blank",
+                            selectTab = true,
+                            contextId = "Work"
+                        )
                     }
+
                     closeTabsTray?.invoke()
                 }
                 R.id.closeTab -> {
@@ -48,9 +57,10 @@ class TabsToolbar @JvmOverloads constructor(
         this.closeTabsTray = closeTabsTray
     }
 
-    fun updateToolbar(isPrivate: Boolean) {
+    fun updateToolbar(isPrivate: Boolean, contextId: String) {
         // Store the state for the menu option
         isPrivateTray = isPrivate
+        container = contextId
 
         // Update the menu option text
         menu.findItem(R.id.closeTab).title = if (isPrivate) {

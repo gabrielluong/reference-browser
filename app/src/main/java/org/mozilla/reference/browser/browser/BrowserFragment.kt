@@ -12,6 +12,7 @@ import mozilla.components.browser.thumbnails.BrowserThumbnails
 import mozilla.components.feature.awesomebar.AwesomeBarFeature
 import mozilla.components.feature.syncedtabs.SyncedTabsStorageSuggestionProvider
 import mozilla.components.feature.tabs.toolbar.TabsToolbarFeature
+import mozilla.components.feature.toolbar.ContainerToolbarFeature
 import mozilla.components.feature.toolbar.WebExtensionToolbarFeature
 import mozilla.components.support.base.feature.UserInteractionHandler
 import mozilla.components.support.base.feature.ViewBoundFeatureWrapper
@@ -24,6 +25,7 @@ import org.mozilla.reference.browser.tabs.TabsTrayFragment
  * Fragment used for browsing the web within the main app.
  */
 class BrowserFragment : BaseBrowserFragment(), UserInteractionHandler {
+    private val containerToolbarFeature = ViewBoundFeatureWrapper<ContainerToolbarFeature>()
     private val thumbnailsFeature = ViewBoundFeatureWrapper<BrowserThumbnails>()
     private val readerViewFeature = ViewBoundFeatureWrapper<ReaderViewIntegration>()
     private val webExtToolbarFeature = ViewBoundFeatureWrapper<WebExtensionToolbarFeature>()
@@ -36,15 +38,21 @@ class BrowserFragment : BaseBrowserFragment(), UserInteractionHandler {
                 requireContext(),
                 requireComponents.search.searchEngineManager,
                 requireComponents.useCases.searchUseCases.defaultSearch,
-                requireComponents.core.client)
+                requireComponents.core.client
+            )
             .addSessionProvider(
                 resources,
                 requireComponents.core.store,
-                requireComponents.useCases.tabsUseCases.selectTab)
+                requireComponents.useCases.tabsUseCases.selectTab
+            )
             .addHistoryProvider(
                 requireComponents.core.historyStorage,
-                requireComponents.useCases.sessionUseCases.loadUrl)
-            .addClipboardProvider(requireContext(), requireComponents.useCases.sessionUseCases.loadUrl)
+                requireComponents.useCases.sessionUseCases.loadUrl
+            )
+            .addClipboardProvider(
+                requireContext(),
+                requireComponents.useCases.sessionUseCases.loadUrl
+            )
 
         // We cannot really add a `addSyncedTabsProvider` to `AwesomeBarFeature` coz that would create
         // a dependency on feature-syncedtabs (which depends on Sync).
@@ -60,14 +68,17 @@ class BrowserFragment : BaseBrowserFragment(), UserInteractionHandler {
             toolbar = toolbar,
             sessionId = sessionId,
             sessionManager = requireComponents.core.sessionManager,
-            showTabs = ::showTabs)
+            showTabs = ::showTabs
+        )
 
         thumbnailsFeature.set(
-                feature = BrowserThumbnails(requireContext(),
-                        engineView,
-                        requireComponents.core.store),
-                owner = this,
-                view = view
+            feature = BrowserThumbnails(
+                requireContext(),
+                engineView,
+                requireComponents.core.store
+            ),
+            owner = this,
+            view = view
         )
 
         readerViewFeature.set(
@@ -79,6 +90,12 @@ class BrowserFragment : BaseBrowserFragment(), UserInteractionHandler {
                 view.readerViewBar,
                 view.readerViewAppearanceButton
             ),
+            owner = this,
+            view = view
+        )
+
+        containerToolbarFeature.set(
+            feature = ContainerToolbarFeature(view.toolbar, requireContext().components.core.store),
             owner = this,
             view = view
         )

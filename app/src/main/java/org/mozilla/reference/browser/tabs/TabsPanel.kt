@@ -22,8 +22,9 @@ class TabsPanel @JvmOverloads constructor(
 ) : TabLayout(context, attrs), TabLayout.OnTabSelectedListener {
     private var normalTab: Tab
     private var privateTab: Tab
+    private var workContainer: Tab
     private var tabsFeature: TabsFeature? = null
-    private var updateTabsToolbar: ((isPrivate: Boolean) -> Unit)? = null
+    private var updateTabsToolbar: ((isPrivate: Boolean, contextId: String) -> Unit)? = null
 
     init {
         normalTab = newTab().apply {
@@ -36,13 +37,23 @@ class TabsPanel @JvmOverloads constructor(
             icon = resources.getThemedDrawable(R.drawable.mozac_ic_private_browsing)
         }
 
+        workContainer = newTab().apply {
+            contentDescription = "Work"
+            icon = resources.getThemedDrawable(R.drawable.mozac_ic_briefcase)
+            tag = "Work"
+        }
+
         addOnTabSelectedListener(this)
 
         addTab(normalTab)
         addTab(privateTab)
+        addTab(workContainer)
     }
 
-    fun initialize(tabsFeature: TabsFeature?, updateTabsToolbar: (isPrivate: Boolean) -> Unit) {
+    fun initialize(
+        tabsFeature: TabsFeature?,
+        updateTabsToolbar: (isPrivate: Boolean, contextId: String) -> Unit
+    ) {
         this.tabsFeature = tabsFeature
         this.updateTabsToolbar = updateTabsToolbar
     }
@@ -52,14 +63,15 @@ class TabsPanel @JvmOverloads constructor(
         tab?.icon?.colorTint(R.color.photonPurple50)
 
         tabsFeature?.filterTabs { tabSessionState ->
-            if (tab == normalTab) {
-                !tabSessionState.content.private
-            } else {
-                tabSessionState.content.private
+            when (tab) {
+                normalTab -> !tabSessionState.content.private
+                privateTab -> tabSessionState.content.private
+                else -> tabSessionState.contextId == tab?.tag
             }
         }
 
-        updateTabsToolbar?.invoke(tab == privateTab)
+        val contextId = ""
+        updateTabsToolbar?.invoke(tab == privateTab, contextId)
     }
 
     override fun onTabReselected(tab: Tab?) {
@@ -71,7 +83,8 @@ class TabsPanel @JvmOverloads constructor(
         tab?.icon?.colorFilter = null
     }
 
-    private fun Resources.getThemedDrawable(@DrawableRes resId: Int) = getDrawable(resId, context.theme)
+    private fun Resources.getThemedDrawable(@DrawableRes resId: Int) =
+        getDrawable(resId, context.theme)
 
     private fun Drawable.colorTint(@ColorRes color: Int) = apply {
         mutate()
